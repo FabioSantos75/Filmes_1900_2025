@@ -1,0 +1,265 @@
+<?xml version="1.0" encoding="UTF-8"?><sqlb_project><db path="/home/fabio/Downloads/Banco de Dados/ANÁLISES/Filmes/bancofilmes.db" readonly="0" foreign_keys="1" case_sensitive_like="0" temp_store="0" wal_autocheckpoint="1000" synchronous="2"/><attached/><window><main_tabs open="structure pragmas browser query" current="3"/></window><tab_structure><column_width id="0" width="300"/><column_width id="1" width="0"/><column_width id="2" width="100"/><column_width id="3" width="1356"/><column_width id="4" width="0"/><expanded_item id="0" parent="1"/><expanded_item id="1" parent="1"/><expanded_item id="2" parent="1"/><expanded_item id="3" parent="1"/></tab_structure><tab_browse><current_table name="4,16:maintabelafilmes_csv"/><default_encoding codec=""/><browse_table_settings><table schema="main" name="tabelafilmes_csv" show_row_id="0" encoding="" plot_x_axis="" unlock_view_pk="_rowid_"><sort/><column_widths><column index="1" value="79"/><column index="2" value="300"/><column index="3" value="300"/><column index="4" value="300"/><column index="5" value="51"/><column index="6" value="165"/><column index="7" value="98"/><column index="8" value="119"/><column index="9" value="125"/><column index="10" value="103"/></column_widths><filter_values/><conditional_formats/><row_id_formats/><display_formats/><hidden_columns/><plot_y_axes/><global_filter/></table></browse_table_settings></tab_browse><tab_sql><sql name="SQL 1">SELECT * FROM tabelafilmes_csv LIMIT 10;
+-- Liste os títulos de todos os filmes em ordem alfabética.
+SELECT title 
+FROM tabelafilmes_csv
+ORDER BY title ASC;
+
+-- Quantos filmes há no banco de dados?
+SELECT COUNT(title) AS Qtd_Filmes
+FROM tabelafilmes_csv;
+
+-- Quantos filmes têm idioma original em inglês ('en')?
+SELECT count(title) AS Qtd_en
+FROM tabelafilmes_csv
+WHERE original_language = &quot;en&quot;;
+
+-- 10 filmes mais votados (com base em vote_count).
+SELECT title AS Titulo, sum(vote_count) AS Qtd_Votos
+FROM tabelafilmes_csv
+GROUP BY title
+ORDER BY Qtd_Votos DESC
+LIMIT 10;
+
+-- Filmes que têm nota média maior que 8.
+SELECT title AS Titulo, AVG(vote_average) as Voto_Medio
+FROM tabelafilmes_csv
+GROUP BY title
+HAVING Voto_Medio &gt; 8
+ORDER BY Voto_Medio DESC;
+
+-- 5 filmes com maior popularidade.
+SELECT title AS Titulo, SUM(popularity) AS Popularidade, 
+strftime('%Y', release_date) AS Ano_Lançamento, round(vote_average, 2) AS Nota_Media
+FROM tabelafilmes_csv
+GROUP BY title, Ano_Lançamento
+ORDER BY Popularidade DESC 
+LIMIT 5;
+
+-- Idiomas com mais filmes (em ordem decrescente de quantidade).
+SELECT original_language AS Linguagem_Original, count(title) AS Qtd_Filmes
+FROM tabelafilmes_csv
+GROUP BY original_language
+ORDER BY Qtd_Filmes DESC LIMIT 10;
+
+-- Quais são os filmes lançados depois de 2020? Mostre o título e a data.
+SELECT title, release_date
+FROM tabelafilmes_csv
+WHERE release_date &gt; &quot;2020-12-31&quot;;
+
+-- Filmes com nota média acima de 7.
+SELECT title AS Titulos_nao_adultos, vote_average as voto
+FROM tabelafilmes_csv
+WHERE adult == 'False' AND 	vote_average &gt; 7
+ORDER BY voto DESC;
+
+-- Qual é a média de votos (vote_average) dos filmes em cada idioma (original_language)? Ordene do maior para o menor.
+--Qual é o idioma com mais filmes lançados? Isso reflete na qualidade?
+SELECT original_language, count(title) AS Titulos, ROUND(AVG(vote_average), 2) AS media_voto
+FROM tabelafilmes_csv
+GROUP BY original_language
+ORDER BY media_voto DESC;
+
+-- MAIS POPULAR DE CADA ANO
+SELECT Ano, title AS Titulo, popularity AS Mais_Popular
+FROM (
+    SELECT STRFTIME('%Y', release_date) AS Ano, title, popularity,
+           MAX(popularity) OVER (PARTITION BY STRFTIME('%Y', release_date)) AS Max_Popularity
+    FROM tabelafilmes_csv
+) AS subquery
+WHERE popularity = Max_Popularity
+ORDER BY Ano DESC;
+
+
+--Idioma original seja francês ('pt').
+SELECT title, original_language, release_date
+FROM tabelafilmes_csv
+WHERE original_language = 'pt';
+
+-- Exatamente nota 10.
+SELECT title, vote_average, vote_count AS Qtd_votos
+FROM tabelafilmes_csv
+WHERE vote_average == 10.0
+ORDER BY Qtd_votos DESC;
+
+-- Liste os títulos dos filmes cuja sinopse (overview) contenha a palavra &quot;love&quot;.
+SELECT title, vote_average, overview
+FROM tabelafilmes_csv
+WHERE overview LIKE '%love%'
+ORDER BY vote_average DESC;
+
+-- Quais são os títulos dos filmes cujo título original seja diferente do título?
+SELECT title, original_title, release_date 
+FROM tabelafilmes_csv
+WHERE title &lt;&gt; original_title;
+
+-- Liste os 10 filmes menos populares.
+SELECT * FROM tabelafilmes_csv
+ORDER BY popularity ASC
+LIMIT 10;
+
+--Será que os filmes estão ficando melhores com o passar do tempo?
+SELECT Ano, ROUND(AVG(vote_average), 2) AS Voto
+FROM (
+    SELECT STRFTIME('%Y', release_date) AS Ano, title, vote_average
+    FROM tabelafilmes_csv
+) AS subquery
+GROUP BY Ano
+HAVING Voto &gt; 0
+ORDER BY Voto DESC;
+
+-- Nota Média em cada década
+SELECT 
+    CASE 
+        WHEN Ano BETWEEN '2015' AND '2025' THEN '2015-2025'
+        WHEN Ano BETWEEN '2004' AND '2014' THEN '2004-2014'
+        WHEN Ano BETWEEN '1993' AND '2003' THEN '1993-2003'
+        WHEN Ano BETWEEN '1982' AND '1992' THEN '1982-1992'
+        WHEN Ano BETWEEN '1971' AND '1981' THEN '1971-1981'
+        WHEN Ano BETWEEN '1960' AND '1970' THEN '1960-1970'
+        WHEN Ano BETWEEN '1949' AND '1959' THEN '1949-1959'
+        WHEN Ano BETWEEN '1938' AND '1948' THEN '1938-1948'
+        WHEN Ano BETWEEN '1927' AND '1937' THEN '1927-1937'
+        WHEN Ano BETWEEN '1916' AND '1926' THEN '1916-1926'
+        WHEN Ano BETWEEN '1900' AND '1915' THEN '1900-1915'
+        ELSE 'Fora do Intervalo'
+    END AS Decada,
+    COUNT('titles') AS QTD_filmes, ROUND(AVG(vote_average), 3) AS Media_voto
+FROM (
+    SELECT STRFTIME('%Y', release_date) AS Ano, vote_average
+    FROM tabelafilmes_csv
+    WHERE vote_average &gt; 0 
+) AS subquery
+GROUP BY Decada
+HAVING Decada != 'Fora do Intervalo'
+ORDER BY Decada ASC;
+
+SELECT title, release_date, vote_average
+FROM tabelafilmes_csv
+WHERE release_date BETWEEN '2014-12-31' AND '2025-12-31';
+
+-- Qtd de votos em cada década.
+SELECT 
+    CASE 
+        WHEN Ano BETWEEN '2015' AND '2025' THEN '2015-2025'
+        WHEN Ano BETWEEN '2004' AND '2014' THEN '2004-2014'
+        WHEN Ano BETWEEN '1993' AND '2003' THEN '1993-2003'
+        WHEN Ano BETWEEN '1982' AND '1992' THEN '1982-1992'
+        WHEN Ano BETWEEN '1971' AND '1981' THEN '1971-1981'
+        WHEN Ano BETWEEN '1960' AND '1970' THEN '1960-1970'
+        WHEN Ano BETWEEN '1949' AND '1959' THEN '1949-1959'
+        WHEN Ano BETWEEN '1938' AND '1948' THEN '1938-1948'
+        WHEN Ano BETWEEN '1927' AND '1937' THEN '1927-1937'
+        WHEN Ano BETWEEN '1916' AND '1926' THEN '1916-1926'
+        WHEN Ano BETWEEN '1900' AND '1915' THEN '1900-1915'
+        ELSE 'Fora do Intervalo'
+    END AS Década, 
+    COUNT('title') AS Quantidade_de_Filmes
+FROM (
+    SELECT 
+        STRFTIME('%Y', release_date) AS Ano, vote_average
+    FROM tabelafilmes_csv
+    WHERE vote_average &gt; 0 
+) AS subquery
+GROUP BY Década
+HAVING Década != 'Fora do Intervalo'
+ORDER BY Década ASC;
+
+
+
+--A quantidade de lançamentos por ano tem aumentado ou diminuído? (R: Aumentado)
+--Qual foi o ano com mais lançamentos de filmes? E o com menos?
+SELECT Ano, COUNT(title) AS Qtd_filmes
+FROM (
+    SELECT STRFTIME('%Y', release_date) AS Ano, title, vote_average
+    FROM tabelafilmes_csv
+) AS subquery
+GROUP BY Ano
+HAVING Ano != 'NULL' 
+ORDER BY Qtd_filmes DESC;  
+
+--Filmes mais votados também são os mais bem avaliados? 
+SELECT title AS Filme, sum(vote_count) AS Qtd_votos, avg(vote_average) AS Nota_Media
+FROM tabelafilmes_csv
+GROUP BY title
+HAVING Qtd_votos &gt; 0
+ORDER BY Qtd_votos DESC
+LIMIT 20;
+
+-- Média de voto médio dos filmes com qtd de votos acima da média. R: Quanto maior a qtd de votos (vote_count) maior e a (vote_average).
+SELECT ROUND(avg(vote_average), 2) AS MEDIA_VOTOS_ACIMA
+FROM tabelafilmes_csv
+WHERE vote_count &gt; (SELECT ROUND(avg(vote_count), 2) from tabelafilmes_csv);
+
+SELECT ROUND(avg(vote_average), 2) AS MEDIA_VOTOS_ABAIXO
+FROM tabelafilmes_csv
+WHERE vote_count &lt; (SELECT ROUND(avg(vote_count), 2) from tabelafilmes_csv);
+
+
+--Filmes populares geralmente têm sinopses mais curtas ou mais longas? R: Os 10 filmes mais populares tem sinopse menor que a média
+SELECT ROUND(AVG(LENGTH(overview)), 2) AS Media_Tamanho_Sinopse
+FROM tabelafilmes_csv;
+
+WITH populares AS (
+	SELECT title, sum(popularity) AS Qtd_pop, ROUND(avg(vote_average), 2) AS Media_votos, length(overview) AS Media_Sinopse
+	FROM tabelafilmes_csv
+	GROUP BY title
+	HAVING Qtd_pop &gt; 0
+	ORDER BY Qtd_pop DESC
+	LIMIT 20
+)
+SELECT AVG(Media_Sinopse) AS MEDIA_DOS_POPULARES FROM populares;
+
+--Os filmes para adultos têm melhor avaliação do que os convencionais? OBS: NÃO TEM True
+WITH menores AS (
+    SELECT AVG(vote_average) AS menor
+    FROM tabelafilmes_csv
+    WHERE adult = 'True';
+), 
+maiores AS (
+    SELECT AVG(vote_average) AS maior
+    FROM tabelafilmes_csv
+    WHERE adult = 'False'
+)
+SELECT maiores.maior, menores.menor
+FROM maiores, menores;
+
+--Quais idiomas produzem os filmes mais bem avaliados? E os piores?
+--Qual é a distribuição de notas médias por idioma? Algum idioma se destaca?
+SELECT original_language, count('title') AS Qtd_Filmes, ROUND(AVG(vote_average), 2) AS Media_Voto
+FROM tabelafilmes_csv 
+GROUP BY original_language ORDER BY Media_Voto DESC LIMIT 20;
+
+--Existe uma nota média mais comum entre todos os filmes?
+SELECT round(AVG(vote_average), 2) Media_Geral
+FROM tabelafilmes_csv WHERE vote_average &lt;&gt; 0;
+
+--Filmes com títulos diferentes do título original são mais bem avaliados? R: Filmes com nomes diferentes são melhores avaliados.
+WITH diferentes AS (
+    SELECT title, original_title, release_date, vote_average AS Media_diferentes
+    FROM tabelafilmes_csv
+    WHERE title &lt;&gt; original_title
+), 
+media AS (
+    SELECT ROUND(AVG(vote_average), 2) AS Media_Geral
+    FROM tabelafilmes_csv 
+    WHERE vote_average &lt;&gt; 0
+)
+SELECT ROUND(AVG(diferentes.Media_diferentes), 2) AS Média_dif, media.Media_Geral
+FROM diferentes, media;
+
+--Filmes com palavras como “love”, “war” ou “death” na sinopse têm avaliação diferente da média geral?
+WITH love AS (
+    SELECT ROUND(AVG(vote_average), 2) AS nota_love
+    FROM tabelafilmes_csv WHERE overview LIKE '%love%'
+), war AS (
+    SELECT ROUND(AVG(vote_average), 2) AS nota_war
+    FROM tabelafilmes_csv WHERE overview LIKE '%war%'
+), death AS (
+    SELECT ROUND(AVG(vote_average), 2) AS nota_death
+    FROM tabelafilmes_csv WHERE overview LIKE '%death%'
+)
+SELECT love.nota_love, war.nota_war, death.nota_death
+FROM love, war, death;
+
+
+</sql><current_tab id="0"/></tab_sql></sqlb_project>
